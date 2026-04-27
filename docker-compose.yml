@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:17
+    container_name: wayfare-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_password
+      POSTGRES_DB: wayfarer
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d wayfarer"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    image: wayfare-api:latest
+    build:
+      context: .
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: wayfare-api
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=your_password
+      - DB_URL=jdbc:postgresql://db:5432/wayfarer
+      - MAILER_USERNAME=${MAILER_USERNAME:-your_mailtrap_user}
+      - MAILER_PASSWORD=${MAILER_PASSWORD:-your_mailtrap_pass}
+      - MAILER_FROM=${MAILER_FROM:-noreply@wayfare.com}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@wayfare.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+
+volumes:
+  pgdata:

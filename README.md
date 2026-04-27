@@ -247,6 +247,20 @@ java -jar target/wayfare-1.0.0-SNAPSHOT-runner.jar
 ./target/wayfare-1.0.0-SNAPSHOT-runner
 ```
 
+### Docker Compose
+To run the full stack (API + PostgreSQL) easily using Docker Compose:
+
+1. Create a `.env` file from the template in the configuration section.
+2. Build and start the containers:
+   ```bash
+   docker-compose up --build -d
+   ```
+3. The API will be available at `http://localhost:8080`.
+4. To stop the containers:
+   ```bash
+   docker-compose down
+   ```
+
 ---
 
 ## 📖 API Reference
