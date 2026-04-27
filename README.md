@@ -39,6 +39,156 @@
 
 ---
 
+## 🏛 Architecture
+
+### System Layers
+
+```mermaid
+flowchart TD
+    Client(["🌐 Client\n(Browser / Mobile / Postman)"])
+
+    subgraph Quarkus Application
+        direction TB
+
+        subgraph REST["REST Layer — controller/v1"]
+            AC["AuthController\n/api/v1/auth"]
+            TC["TripController\n/api/v1/trips"]
+            BC["BookingController\n/api/v1/bookings"]
+        end
+
+        subgraph Security["Security Layer"]
+            JWT["SmallRye JWT\n(RS256 verification)"]
+            PW["PasswordUtils\n(Bcrypt)"]
+            TS["TokenService\n(JWT generation)"]
+        end
+
+        subgraph Services["Service Layer"]
+            AS["AuthService"]
+            TRS["TripService"]
+            BS["BookingService"]
+        end
+
+        subgraph Persistence["Persistence Layer — Panache Entities"]
+            UE["User Entity"]
+            TE["Trip Entity"]
+            BE["Booking Entity"]
+        end
+
+        subgraph Infra["Infrastructure"]
+            GEM["GlobalExceptionMapper\n(@Provider)"]
+            DI["DataInitializer\n(Admin seeding)"]
+            FLY["Flyway\n(Schema migrations)"]
+            ML["Quarkus Mailer\n(SMTP)"]
+        end
+    end
+
+    DB[("🐘 PostgreSQL")]
+
+    Client -->|"HTTP request"| REST
+    REST -->|"JWT check"| JWT
+    AC --> AS
+    TC --> TRS
+    BC --> BS
+    AS --> PW
+    AS --> TS
+    AS --> ML
+    Services --> Persistence
+    Persistence --> DB
+    FLY --> DB
+    DI --> Persistence
+    REST -->|"exception"| GEM
+```
+
+---
+
+### JWT Authentication Flow
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant Auth as AuthController
+    participant Svc as AuthService
+    participant PW as PasswordUtils
+    participant TS as TokenService
+    participant DB as PostgreSQL
+
+    C->>Auth: POST /api/v1/auth/login {email, password}
+    Auth->>Svc: login(request)
+    Svc->>DB: findByEmail(email)
+    DB-->>Svc: User record
+    Svc->>PW: checkPassword(plain, hashed)
+    PW-->>Svc: true / false
+    alt Invalid credentials or not verified
+        Svc-->>Auth: BadRequestException
+        Auth-->>C: 400 { message: "..." }
+    else Valid
+        Svc->>TS: generateToken(user)
+        TS-->>Svc: signed JWT (RS256)
+        Svc-->>Auth: AuthResponse
+        Auth-->>C: 200 { token, email, role }
+    end
+
+    Note over C,Auth: Subsequent protected requests
+
+    C->>Auth: POST /api/v1/bookings\nAuthorization: Bearer <token>
+    Auth->>Auth: SmallRye JWT verifies RS256 signature
+    alt Token invalid / expired
+        Auth-->>C: 401 Unauthorized
+    else Token valid
+        Auth->>Auth: @RolesAllowed check
+        Auth-->>C: 200 / 201 response
+    end
+```
+
+---
+
+### Data Model
+
+```mermaid
+erDiagram
+    USER {
+        bigint id PK
+        varchar email
+        varchar phone
+        varchar password
+        varchar role
+        boolean isVerified
+        varchar otp
+        timestamp otpExpiry
+        varchar bio
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    TRIP {
+        bigint id PK
+        varchar origin
+        varchar destination
+        timestamp tripDate
+        double fare
+        int capacity
+        varchar status
+        varchar description
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    BOOKING {
+        bigint id PK
+        bigint user_id FK
+        bigint trip_id FK
+        int seatNumber
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    USER ||--o{ BOOKING : "makes"
+    TRIP ||--o{ BOOKING : "has"
+```
+
+---
+
+
 ## 📋 Prerequisites
 
 - **Java 21+**
