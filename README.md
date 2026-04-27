@@ -1,46 +1,55 @@
 # Wayfare Transportation API
 
-Wayfare is a robust, secure, and high-performance RESTful API designed for public bus transportation booking services. Built with the **Quarkus** framework, it follows a clean modular architecture and provides a scalable foundation for modern transit management.
+> A robust, secure, and high-performance RESTful API for public bus transportation booking — built with **Quarkus 3** on Java 21.
+
+[![Build](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/ngirimana/wayfarer)
+[![Tests](https://img.shields.io/badge/tests-47%20passed-brightgreen)](https://github.com/ngirimana/wayfarer)
+[![Java](https://img.shields.io/badge/Java-21-blue)](https://openjdk.org/)
+[![Quarkus](https://img.shields.io/badge/Quarkus-3.34.6-blue)](https://quarkus.io/)
 
 ---
 
 ## 🚀 Key Features
 
-- **User Management**: Registration, Login, and Profile management.
-- **Secure Authentication**: Stateless authentication using **JWT (JSON Web Tokens)**.
-- **OTP Verification**: Email-based OTP for account verification using Mailer integration.
-- **Trip Management**: Comprehensive API for managing bus routes, schedules, and capacity.
-- **Booking System**: Real-time seat reservation with loyalty-based discount calculation.
-- **Database Versioning**: Managed schema migrations using **Flyway**.
-- **Automated Auditing**: `createdAt` and `updatedAt` tracking for all core entities.
-- **API Documentation**: Interactive documentation via **Swagger UI**.
+| Feature | Details |
+|---|---|
+| **User Authentication** | JWT-based stateless auth with RS256 signing |
+| **OTP Verification** | Email OTP for account activation & password reset |
+| **Role-Based Access** | `ADMIN` and `USER` roles enforced on all protected routes |
+| **Trip Management** | Create, browse, and cancel bus trips (admin-managed) |
+| **Booking System** | Seat reservation with loyalty-discount calculation |
+| **Password Security** | Bcrypt hashing via Elytron Security |
+| **Schema Migrations** | Flyway with timestamp-based versioning |
+| **Global Error Handling** | Consistent JSON error responses across all endpoints |
+| **API Docs** | Interactive Swagger UI included |
 
 ---
 
 ## 🛠 Technology Stack
 
-- **Core**: Java 21, Quarkus 3.34.6
+- **Runtime**: Java 21, Quarkus 3.34.6
+- **REST Layer**: Quarkus REST (RESTEasy Reactive) + Jackson
 - **Persistence**: Hibernate ORM with Panache (Active Record Pattern)
 - **Database**: PostgreSQL
-- **Migrations**: Flyway (Timestamp-based versioning)
-- **Security**: SmallRye JWT, Bcrypt Password Encryption
-- **API Documentation**: SmallRye OpenAPI (Swagger UI)
-- **Email**: Quarkus Mailer (configured for Mailtrap)
+- **Migrations**: Flyway
+- **Security**: SmallRye JWT (RS256), Elytron Bcrypt
+- **Email**: Quarkus Mailer (SMTP — Mailtrap / Gmail / etc.)
+- **Docs**: SmallRye OpenAPI + Swagger UI
+- **Testing**: JUnit 5, REST Assured, Mockito, Panache Mock
 
 ---
 
 ## 📋 Prerequisites
 
-- **Java 21** or higher
-- **Maven 3.9+**
-- **PostgreSQL** instance
-- **Docker** (optional, for containerized deployment)
+- **Java 21+**
+- **Maven 3.9+** (or use the included `./mvnw` wrapper)
+- **PostgreSQL** database (running locally or remotely)
 
 ---
 
 ## ⚙️ Configuration
 
-The application uses environment variables for sensitive configuration. Create a `.env` file in the root directory (or use the provided one) with the following variables:
+Copy the template below into a `.env` file at the project root (already in `.gitignore`):
 
 ```env
 # Database
@@ -48,49 +57,41 @@ DB_USERNAME=postgres
 DB_PASSWORD=your_password
 DB_URL=jdbc:postgresql://localhost:5432/wayfarer
 
-# Mailer (Example for Mailtrap)
+# Mailer (SMTP — example for Mailtrap)
 MAILER_USERNAME=your_mailtrap_user
 MAILER_PASSWORD=your_mailtrap_pass
 MAILER_FROM=noreply@wayfare.com
 
-# Admin Seeding
+# Admin seeding (auto-created on first startup)
 ADMIN_EMAIL=admin@wayfare.com
 ADMIN_PASSWORD=admin123
 ```
+
+All keys map to `application.properties` via `${ENV_VAR}` substitution.
 
 ---
 
 ## 🏃 Running the Application
 
-### Development Mode
-To run the application with live-coding enabled:
+### Development mode (live reload)
 ```bash
 ./mvnw quarkus:dev
 ```
-The API will be available at `http://localhost:8080`.
+API available at `http://localhost:8080`
 
-### Database Migrations
-Migrations are managed by Flyway and run automatically on startup.
-- **Location**: `src/main/resources/db/migration/`
-- **Format**: `V<YYYYMMDDHHMMSS>__Description.sql` (e.g., `V20260427102900__Consolidated_Schema.sql`)
+### Run tests
+```bash
+./mvnw test
+```
+> 47 tests across Auth, Trip, Booking controllers and Trip service.
 
-### API Documentation
-Once the app is running, you can explore and test the endpoints via Swagger UI:
-- **Swagger UI**: `http://localhost:8080/api/swagger`
-- **OpenAPI Spec**: `http://localhost:8080/api/openapi`
-
----
-
-## 📦 Packaging and Deployment
-
-### Uber-JAR
+### Package as Uber-JAR
 ```bash
 ./mvnw package -Dquarkus.package.type=uber-jar
 java -jar target/wayfare-1.0.0-SNAPSHOT-runner.jar
 ```
 
-### Native Executable
-To build a native image (requires GraalVM):
+### Native executable (requires GraalVM)
 ```bash
 ./mvnw package -Dnative
 ./target/wayfare-1.0.0-SNAPSHOT-runner
@@ -98,16 +99,128 @@ To build a native image (requires GraalVM):
 
 ---
 
+## 📖 API Reference
+
+Base URL: `http://localhost:8080/api/v1`
+
+Interactive docs: **`http://localhost:8080/api/swagger`**
+OpenAPI spec: `http://localhost:8080/api/openapi`
+
+### 🔐 Authentication — `/api/v1/auth`
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/signup` | Public | Register a new user account |
+| `POST` | `/verify` | Public | Verify account with OTP |
+| `POST` | `/login` | Public | Login — returns JWT token |
+| `POST` | `/reset-password-request?email=` | Public | Send OTP for password reset |
+| `POST` | `/reset-password?email=&otp=&password=` | Public | Reset password using OTP |
+
+**Signup request:**
+```json
+{ "email": "user@example.com", "phone": "+250700000000", "password": "secret123" }
+```
+
+**Login response:**
+```json
+{ "token": "<JWT>", "email": "user@example.com", "role": "USER" }
+```
+
+---
+
+### 🚌 Trips — `/api/v1/trips`
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/` | Public | List all active trips (filterable by `origin`, `destination`) |
+| `GET` | `/{id}` | Public | Get a single trip by ID |
+| `POST` | `/` | `ADMIN` | Create a new trip |
+| `PATCH` | `/{id}/cancel` | `ADMIN` | Cancel a trip |
+
+**Query params for GET `/`:** `origin`, `destination`, `sort`
+
+---
+
+### 🎫 Bookings — `/api/v1/bookings`
+
+> All booking endpoints require a valid JWT (`Authorization: Bearer <token>`).
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/` | `USER` | Book a seat on a trip |
+| `GET` | `/` | `USER` / `ADMIN` | List your bookings |
+| `DELETE` | `/{id}` | `USER` / `ADMIN` | Cancel a booking — `204 No Content` |
+
+**Booking request:**
+```json
+{ "tripId": 1, "seatNumber": 12 }
+```
+
+---
+
+### ⚠️ Error Responses
+
+All error responses follow a consistent JSON envelope:
+
+```json
+{ "message": "Account not verified" }
+```
+
+| Status | Meaning |
+|--------|---------|
+| `400` | Validation error / bad request |
+| `401` | Unauthorized (missing / invalid JWT) |
+| `403` | Forbidden (wrong role) |
+| `404` | Resource not found |
+| `409` | Conflict (e.g. email already exists) |
+| `500` | Internal server error |
+
+---
+
 ## 📂 Project Structure
 
-- `org.acme.controller`: REST Resource endpoints (v1).
-- `org.acme.service`: Business logic interfaces and implementations.
-- `org.acme.entity`: Hibernate Panache entities.
-- `org.acme.security`: JWT and Password utility classes.
-- `org.acme.exception`: Global error handling and mapping.
-- `resources/db/migration`: Flyway SQL migration scripts.
+```
+src/
+├── main/
+│   ├── java/org/acme/
+│   │   ├── config/           # DataInitializer (admin seeding)
+│   │   ├── controller/v1/    # REST endpoints (Auth, Trip, Booking)
+│   │   ├── entity/           # Panache entities (User, Trip, Booking)
+│   │   ├── exception/        # GlobalExceptionMapper, ConflictException
+│   │   ├── payload/
+│   │   │   ├── request/      # SignupRequest, LoginRequest, BookingRequest…
+│   │   │   └── response/     # AuthResponse, MessageResponse
+│   │   ├── security/         # PasswordUtils (Bcrypt), TokenService (JWT)
+│   │   └── service/          # AuthService, TripService, BookingService
+│   └── resources/
+│       ├── application.properties
+│       ├── db/migration/     # Flyway SQL scripts
+│       ├── privateKey.pem    # JWT RS256 signing key
+│       └── publicKey.pem     # JWT RS256 verification key
+└── test/
+    └── java/org/acme/
+        ├── controller/v1/    # AuthControllerTest, TripControllerTest, BookingControllerTest
+        ├── mock/             # MockBookingService
+        └── service/          # TripServiceTest
+```
+
+---
+
+## 🗄 Database Migrations
+
+Migrations run automatically on startup via Flyway.
+
+- **Location**: `src/main/resources/db/migration/`
+- **Naming**: `V<YYYYMMDDHHmmss>__Description.sql`
+
+| File | Description |
+|------|-------------|
+| `V20260427102900__Consolidated_Schema.sql` | Initial schema (users, trips, bookings) |
+| `V20260427103300__Add_Trip_Description.sql` | Adds `description` column to trips |
+| `V20260427103400__Add_User_Bio.sql` | Adds `bio` column to users |
 
 ---
 
 ## 📄 License
+
 This project is proprietary and confidential.
