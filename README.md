@@ -3,7 +3,8 @@
 > A robust, secure, and high-performance RESTful API for public bus transportation booking — built with **Quarkus 3** on Java 21.
 
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/ngirimana/wayfarer)
-[![Tests](https://img.shields.io/badge/tests-47%20passed-brightgreen)](https://github.com/ngirimana/wayfarer)
+[![Tests](https://img.shields.io/badge/tests-95%20passed-brightgreen)](https://github.com/ngirimana/wayfarer)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/ngirimana/wayfarer)
 [![Java](https://img.shields.io/badge/Java-21-blue)](https://openjdk.org/)
 [![Quarkus](https://img.shields.io/badge/Quarkus-3.34.6-blue)](https://quarkus.io/)
 
@@ -233,7 +234,7 @@ API available at `http://localhost:8080`
 ```bash
 ./mvnw test
 ```
-> 47 tests across Auth, Trip, Booking controllers and Trip service.
+> 95 tests across Auth, Trip, Booking controllers and Trip service.
 
 JaCoCo test coverage report is automatically generated when running tests. You can view the full coverage report by opening `target/jacoco-report/index.html` in your browser.
 
