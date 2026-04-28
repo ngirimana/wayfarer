@@ -12,7 +12,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "bookings")
+@Table(name = "bookings", uniqueConstraints = {
+    @jakarta.persistence.UniqueConstraint(columnNames = {"trip_id", "seatNumber"})
+})
 public class Booking extends PanacheEntity {
 
     @ManyToOne
@@ -27,6 +29,10 @@ public class Booking extends PanacheEntity {
 
     @Positive
     public int seatNumber;
+
+    @Positive
+    @jakarta.persistence.Column(name = "fare_paid")
+    public double farePaid;
 
     @CreationTimestamp
     public LocalDateTime createdAt;

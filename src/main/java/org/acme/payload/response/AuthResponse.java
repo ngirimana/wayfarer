@@ -10,4 +10,16 @@ public class AuthResponse {
         this.email = email;
         this.role = role;
     }
+
+    public String getToken() {
+        return token;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getRole() {
+        return role;
+    }
 }

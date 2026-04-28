@@ -315,4 +315,44 @@ public class AuthControllerTest {
           .then()
              .statusCode(404);
     }
+
+    @Test
+    public void testResetPasswordSuccess() {
+        PanacheMock.mock(User.class);
+        User mockUser = new User();
+        mockUser.email = "test@example.com";
+        mockUser.otp = "123456";
+        mockUser.otpExpiry = LocalDateTime.now().plusMinutes(10);
+        
+        Mockito.when(User.findByEmail("test@example.com")).thenReturn(mockUser);
+        Mockito.when(passwordUtils.hashPassword("newPassword123")).thenReturn("hashedNewPassword");
+
+        given()
+          .queryParam("email", "test@example.com")
+          .queryParam("otp", "123456")
+          .queryParam("password", "newPassword123")
+          .when().post("/api/v1/auth/reset-password")
+          .then()
+             .statusCode(200)
+             .body("message", is("Password reset successfully."));
+    }
+
+    @Test
+    public void testResetPasswordInvalidOTP() {
+        PanacheMock.mock(User.class);
+        User mockUser = new User();
+        mockUser.email = "test@example.com";
+        mockUser.otp = "123456";
+        mockUser.otpExpiry = LocalDateTime.now().plusMinutes(10);
+        
+        Mockito.when(User.findByEmail("test@example.com")).thenReturn(mockUser);
+
+        given()
+          .queryParam("email", "test@example.com")
+          .queryParam("otp", "wrongOTP")
+          .queryParam("password", "newPassword123")
+          .when().post("/api/v1/auth/reset-password")
+          .then()
+             .statusCode(400);
+    }
 }

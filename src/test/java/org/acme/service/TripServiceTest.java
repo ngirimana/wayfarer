@@ -58,4 +58,42 @@ public class TripServiceTest {
         
         Assertions.assertEquals("ACTIVE", createdTrip.status);
     }
+
+    @Test
+    public void testCancelTripSuccess() {
+        Trip mockTrip = new Trip();
+        mockTrip.id = 1L;
+        mockTrip.status = "ACTIVE";
+
+        PanacheMock.mock(Trip.class);
+        Mockito.when(Trip.findById(1L)).thenReturn(mockTrip);
+
+        tripService.cancelTrip(1L);
+        Assertions.assertEquals("CANCELLED", mockTrip.status);
+    }
+
+    @Test
+    public void testCancelTripNotFound() {
+        PanacheMock.mock(Trip.class);
+        Mockito.when(Trip.findById(Mockito.anyLong())).thenReturn(null);
+
+        Assertions.assertThrows(NotFoundException.class, () -> {
+            tripService.cancelTrip(999L);
+        });
+    }
+
+    @Test
+    public void testGetAllTrips() {
+        PanacheMock.mock(Trip.class);
+        Mockito.when(Trip.list(Mockito.anyString(), Mockito.any(), Mockito.anyMap())).thenReturn(java.util.Collections.emptyList());
+
+        // Test with no filters
+        tripService.getAllTrips(null, null, null);
+        
+        // Test with filters and price sort
+        tripService.getAllTrips("Kigali", "Musanze", "price");
+
+        // Test with empty string filters and different sort
+        tripService.getAllTrips("", "", "date");
+    }
 }
