@@ -229,11 +229,13 @@ All keys map to `application.properties` via `${ENV_VAR}` substitution.
 ```
 API available at `http://localhost:8080`
 
-### Run tests
+### Run tests & Generate Coverage
 ```bash
 ./mvnw test
 ```
 > 47 tests across Auth, Trip, Booking controllers and Trip service.
+
+JaCoCo test coverage report is automatically generated when running tests. You can view the full coverage report by opening `target/jacoco-report/index.html` in your browser.
 
 ### Package as Uber-JAR
 ```bash
